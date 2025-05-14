@@ -1,0 +1,54 @@
+
+# Development environment
+.env
+.env.*
+!.env.example
+node_modules/
+vendor/
+composer.lock
+package-lock.json
+yarn.lock
+
+# Build and distribution
+/dist/
+/build/
+*.zip
+*.tar.gz
+
+# IDE and editor files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+/coverage/
+/tests/coverage/
+.phpunit.result.cache
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
