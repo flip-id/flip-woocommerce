@@ -49,68 +49,165 @@ class FlipForBusiness_Notify_Handler {
       // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Token ini dari API eksternal (Flip) dan tidak memerlukan nonce verification.
       $raw_data['token'] = isset($_POST['token']) ? sanitize_text_field( wp_unslash( $_POST['token'] ) ): null;
       
+      // Log request details
+      $log_data = [
+         'timestamp' => current_time('timestamp'),
+         'headers' => getallheaders(),
+         'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+         'raw_data' => [
+            'data' => $raw_data['data']
+         ]
+      ];
+
       FlipForBusiness_Api::fetchAndSetCurrentPluginOptions();
 
-      if (empty($raw_data['data']) || empty($raw_data['token'])) {
-         FlipForBusiness_Logger::log(wp_json_encode($raw_data), 'flip-notification-empty', 'flip', current_time('timestamp'));
-         $this->checkAndRedirectUserToFinishUrl();
-      }else{
-         $result = json_decode(stripslashes( $raw_data['data'] ), true);
+      $response = [
+         'success' => false,
+         'message' => ''
+      ];
 
-         $money_transfer_direction = array(
-            'DOMESTIC_TRANSFER',
-            'DOMESTIC_SPECIAL_TRANSFER',
-            'FOREIGN_INBOUND_SPECIAL_TRANSFER'
+      if (empty($raw_data['data']) || empty($raw_data['token'])) {
+         $missing_params = [];
+         if (empty($raw_data['data'])) {
+            $missing_params[] = 'data';
+         }
+         if (empty($raw_data['token'])) {
+            $missing_params[] = 'token';
+         }
+
+         $response['message'] = sprintf(
+            'Missing required parameters: %s',
+            implode(', ', $missing_params)
          );
 
-         FlipForBusiness_Logger::log(wp_json_encode($result), 'flip-notification', 'flip', current_time('timestamp'));
+         $log_data['callback_response'] = $response;
+         FlipForBusiness_Logger::log(
+            wp_json_encode($log_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'flip-notification',
+            'flip',
+            current_time('timestamp')
+         );
          
-         if (FlipForBusiness_Api::get_token() != $raw_data['token']) {
-            $check_error = array(
-               'token_setting'   => FlipForBusiness_Api::get_token(),
-               'token_post'      => $raw_data['token'],
-               'message'         => 'Error: Validation token from settings does not match or is missing. Please check your configuration and try again.'
-            );
-
-            FlipForBusiness_Logger::log( wp_json_encode($check_error), 'flip-error', 'flip', current_time('timestamp'));
-         }
-
-         // ACCEPT PAYMENT
-         if ( !empty($result['bill_link_id']) && !empty($result['bill_title']) && wc_get_order((int)$result['bill_title']) != false && FlipForBusiness_Api::get_token() === $raw_data['token'] ) {
-            try {
-               $notification_id = $result['id'];
-               $get_payment = FlipForBusiness_Api::getPayment($result['bill_link_id']);
-               
-               // Log Get Payment
-               FlipForBusiness_Logger::log(wp_json_encode($get_payment), 'flip-get-payment', 'flip', current_time('timestamp'));
-               
-               if ($get_payment->total_data > 0) {
-                  $transaction_payment = null;
-      
-                  foreach ($get_payment->data as $transaction) {
-                     if (strpos($transaction->id, $notification_id) !== false) {
-                        $transaction_payment = $transaction;
-                        break;
-                     }
-                  }
-      
-                  if (!empty($transaction_payment)) {
-                     do_action("flipforbusiness_handle_valid_notification", $transaction_payment );
-                  }
-               }else{
-                  FlipForBusiness_Logger::log('Data payment is missing.', 'flip-error', 'flip', current_time('timestamp'));
-               }
-            } catch (\Throwable $th) {
-               FlipForBusiness_Logger::log($th->getMessage(), 'flip-error', 'flip', current_time('timestamp'));
-               throw new Exception(esc_html($th->getMessage()));
-            }
-         }
-
-         // MONEY TRANSFER
-         // if (in_array($result['direction'], $money_transfer_direction)) {
-         //    do_action("flipforbusiness_handle_valid_notification-money-transfer", $result );
-         // }
+         $this->sendResponse(400, $response);
+         $this->checkAndRedirectUserToFinishUrl();
+         return;
       }
+
+      $result = json_decode(stripslashes($raw_data['data']), true);
+      $money_transfer_direction = array(
+         'DOMESTIC_TRANSFER',
+         'DOMESTIC_SPECIAL_TRANSFER',
+         'FOREIGN_INBOUND_SPECIAL_TRANSFER'
+      );
+      
+      if (FlipForBusiness_Api::get_token() != $raw_data['token']) {
+         $check_error = array(
+            'message' => 'Error: Validation token from settings does not match or is missing. Please check your configuration and try again.'
+         );
+
+         $response['message'] = 'Invalid token: Token from settings does not match the received token';
+         $log_data['callback_response'] = $response;
+         FlipForBusiness_Logger::log(
+            wp_json_encode($log_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+            'flip-notification',
+            'flip',
+            current_time('timestamp')
+         );
+         $this->sendResponse(401, $response);
+         return;
+      }
+
+      // ACCEPT PAYMENT
+      if (!empty($result['bill_link_id']) && !empty($result['bill_title']) && wc_get_order((int)$result['bill_title']) != false && FlipForBusiness_Api::get_token() === $raw_data['token']) {
+         try {
+            $notification_id = $result['id'];
+            $get_payment = FlipForBusiness_Api::getPayment($result['bill_link_id']);
+            
+            if ($get_payment->total_data > 0) {
+               $transaction_payment = null;
+   
+               foreach ($get_payment->data as $transaction) {
+                  if (strpos($transaction->id, $notification_id) !== false) {
+                     $transaction_payment = $transaction;
+                     break;
+                  }
+               }
+   
+               if (!empty($transaction_payment)) {
+                  do_action("flipforbusiness_handle_valid_notification", $transaction_payment);
+                  $response['success'] = true;
+                  $response['message'] = sprintf(
+                     'Payment notification processed successfully for order #%s',
+                     $result['bill_title']
+                  );
+                  
+                  $log_data['callback_response'] = $response;
+                  FlipForBusiness_Logger::log(
+                     wp_json_encode($log_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+                     'flip-notification',
+                     'flip',
+                     current_time('timestamp')
+                  );
+
+                  $this->sendResponse(200, $response);
+                  return;
+               }
+            } else {
+               $response['message'] = sprintf(
+                  'Payment data not found for bill link ID: %s',
+                  $result['bill_link_id']
+               );
+
+               $log_data['callback_response'] = $response;
+               FlipForBusiness_Logger::log(
+                  wp_json_encode($log_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+                  'flip-notification',
+                  'flip',
+                  current_time('timestamp')
+               );
+
+               $this->sendResponse(404, $response);
+               return;
+            }
+         } catch (\Throwable $th) {
+            $response['message'] = 'Internal server error occurred while processing payment notification';
+            $log_data['callback_response'] = $response;
+               FlipForBusiness_Logger::log(
+                  wp_json_encode($log_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+                  'flip-notification',
+                  'flip',
+                  current_time('timestamp')
+               );
+            $this->sendResponse(500, $response);
+            return;
+         }
+      }
+
+      $response['message'] = sprintf(
+         'Invalid notification data: Missing required fields (bill_link_id, bill_title) or order #%s not found',
+         $result['bill_title'] ?? 'unknown'
+      );
+
+      $log_data['callback_response'] = $response;
+      FlipForBusiness_Logger::log(
+         wp_json_encode($log_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+         'flip-notification',
+         'flip',
+         current_time('timestamp')
+      );
+      $this->sendResponse(400, $response);
+   }
+
+   /**
+    * Send JSON response with proper headers
+    * 
+    * @param int $status_code HTTP status code
+    * @param array $data Response data
+    * @return void
+    */
+   private function sendResponse($status_code, $data) {
+      status_header($status_code);
+      wp_send_json($data, $status_code);
    }
 
    /**
@@ -162,8 +259,6 @@ class FlipForBusiness_Notify_Handler {
             # code...
             break;
       }
-
-      exit();
    }
 
    /**
