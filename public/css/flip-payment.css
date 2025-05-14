@@ -1,0 +1,82 @@
+.flip_payment_info {
+  position: relative;
+  border: 1px solid #111;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.flip_payment_info .flip_payment_content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.flip_payment_info .flip-payment-button {
+  display: flex;
+  margin-left: 16px;
+  margin-right: 16px;
+  margin-top: 16px;
+}
+.flip-payment-button a {
+  background-color: #515151;
+  color: #e9e6ed;
+  padding: 10px 20px;
+  border: 1px solid #515151;
+  border-radius: 5px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* Hover effect */
+.flip-payment-button a:hover {
+  background-color: #e9e6ed;
+  color: #515151;
+  border: 1px solid #515151;
+}
+
+/**
+ * Modal
+ */
+.flip-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+}
+
+.flip-modal-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  position: relative;
+  width: 80%;
+  height: 80%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.flip-modal-content iframe {
+  width: 100%;
+  height: 80%;
+  border: none;
+}
+
+#payment-complete-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #0071a1;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
