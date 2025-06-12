@@ -21,6 +21,44 @@ var composite = (function(){
       }
    }
 
+   function validateOrderIdPrefix() {
+      // Add input validation for order_id_prefix
+      var prefixField = $('#woocommerce_flip_order_id_prefix');
+      
+      // Show info about current value when field is focused
+      prefixField.on('focus', function() {
+         var currentValue = $(this).val();
+         if (!$(this).next('.prefix-info').length) {
+            $(this).after('<span class="prefix-info" style="color:blue;display:block;margin-top:5px;">Current prefix: "' + currentValue + '". This will be added to all order IDs sent to Flip as Prefix on Bill Title.</span>');
+         }
+      });
+      
+      // Remove info when field loses focus
+      prefixField.on('blur', function() {
+         $('.prefix-info').fadeOut('slow', function() {
+            $(this).remove();
+         });
+      });
+      
+      prefixField.on('input', function() {
+         var input = $(this);
+         var sanitized = input.val().replace(/[^a-zA-Z0-9_\-]/g, '');
+         
+         if (input.val() !== sanitized) {
+            input.val(sanitized);
+            // Show warning if characters were removed
+            if (!input.next('.prefix-warning').length) {
+               input.after('<span class="prefix-warning" style="color:orange;display:block;margin-top:5px;">Special characters removed. Only letters, numbers, hyphens (-) and underscores (_) are allowed.</span>');
+               setTimeout(function() {
+                  $('.prefix-warning').fadeOut('slow', function() {
+                     $(this).remove();
+                  });
+               }, 3000);
+            }
+         }
+      });
+   }
+
    function handle_account_customer_flip_refund() {
       $('#save_flip_refund_meta_box').on('click', function() {
 
@@ -55,6 +93,9 @@ var composite = (function(){
       $('#woocommerce_flip_environment').change(function() {
          toggleApiKeyFields();
       });
+
+      // Validate order ID prefix
+      validateOrderIdPrefix();
 
       // Select2 Flip Global
       $(".flip-select2").select2();
