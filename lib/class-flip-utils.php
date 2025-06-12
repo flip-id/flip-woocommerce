@@ -32,6 +32,49 @@ class FlipForBusiness_Utils {
    }
 
    /**
+    * Add prefix to order ID for Flip API on Flip bill title
+    * @param string $order_id
+    * @return string
+    */
+   public static function addFlipOrderPrefix($order_id) {
+      $options = get_option('woocommerce_flip_settings');
+      $prefix = !empty($options['order_id_prefix']) ? $options['order_id_prefix'] : 'FWOrder-';
+      
+      // Sanitize prefix to only allow alphanumeric characters, hyphens, and underscores
+      $prefix = preg_replace('/[^a-zA-Z0-9_\-]/', '', $prefix);
+      
+      // Ensure we have a valid prefix
+      if (empty($prefix)) {
+         $prefix = 'FWOrder-';
+      }
+      
+      return $prefix . $order_id;
+   }
+
+   /**
+    * Remove prefix from bill title returned by Flip API
+    * @param string $bill_title
+    * @return string
+    */
+   public static function removeFlipOrderPrefix($bill_title) {
+      $options = get_option('woocommerce_flip_settings');
+      $prefix = !empty($options['order_id_prefix']) ? $options['order_id_prefix'] : 'FWOrder-';
+      
+      // Sanitize prefix to only allow alphanumeric characters, hyphens, and underscores
+      $prefix = preg_replace('/[^a-zA-Z0-9_\-]/', '', $prefix);
+      
+      // Ensure we have a valid prefix
+      if (empty($prefix)) {
+         $prefix = 'FWOrder-';
+      }
+      
+      if (strpos($bill_title, $prefix) === 0) {
+         return substr($bill_title, strlen($prefix));
+      }
+      return $bill_title;
+   }
+
+   /**
     * Data Destination Bank
     */
    public static function flip_destination_bank_lists() {
