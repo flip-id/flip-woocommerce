@@ -57,6 +57,13 @@ return apply_filters('flipforbusiness_settings',
 			'description'	=> 'This controls the description which the user sees during checkout.',
 			'default' 		=> 'Pay with Flip for Business.',
       ),
+      'order_id_prefix'	=> array(
+			'title'			=> 'Order ID Prefix',
+			'type'			=> 'text',
+			'description'	=> 'Prefix to add to order IDs when sending to Flip API. This helps identify transactions from your store. Only alphanumeric characters, hyphens (-), and underscores (_) are allowed. Default value: FWOrder-',
+			'default'		=> 'FWOrder-',
+			'placeholder'	=> 'FWOrder-',
+      ),
 		// 'charge_fee' => array(
       //    'title'     	=> 'Charge Fee',
       //    'type'      	=> 'checkbox',
