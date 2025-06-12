@@ -117,6 +117,11 @@ class FlipForBusiness_Notify_Handler {
          return;
       }
 
+      // Process bill_title if it has the prefix
+      if (!empty($result['bill_title'])) {
+         $result['bill_title'] = FlipForBusiness_Utils::removeFlipOrderPrefix($result['bill_title']);
+      }
+
       // ACCEPT PAYMENT
       if (!empty($result['bill_link_id']) && !empty($result['bill_title']) && wc_get_order((int)$result['bill_title']) != false && FlipForBusiness_Api::get_token() === $raw_data['token']) {
          try {
@@ -152,7 +157,7 @@ class FlipForBusiness_Notify_Handler {
                   $this->sendResponse(200, $response);
                   return;
                }
-            } else {
+            
                $response['message'] = sprintf(
                   'Payment data not found for bill link ID: %s',
                   $result['bill_link_id']
@@ -218,7 +223,10 @@ class FlipForBusiness_Notify_Handler {
     * @return void
     */
    public function handleFlipValidNotificationRequest( $flip_notification ) {
-      $order_id = (int)$flip_notification->bill_title;
+      // Process bill_title if it has the prefix
+      $bill_title = FlipForBusiness_Utils::removeFlipOrderPrefix($flip_notification->bill_title);
+      
+      $order_id = (int)$bill_title;
       $order = new WC_Order( $order_id );
       $status_notification = strtolower($flip_notification->status);
       $sender_bank_type = FlipForBusiness_Utils::flip_clean_string($flip_notification->sender_bank_type);
