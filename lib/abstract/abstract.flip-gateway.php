@@ -38,6 +38,7 @@
          $this->api_key_production = $this->get_option('api_key_production');
          $this->token_validation_sandbox = $this->get_option('token_validation_sandbox');
          $this->token_validation_production = $this->get_option('token_validation_production');
+         $this->order_id_prefix = $this->get_option('order_id_prefix');
          $this->expiry = $this->get_option('expiry');
 
          // Actions.
@@ -274,5 +275,30 @@
       */
       public function get_main_notification_url() {
          return add_query_arg( 'wc-api', 'FlipForBusiness_Gateway', home_url( '/' ) );
+      }
+
+      /**
+       * Process admin options and sanitize the order_id_prefix field
+       */
+      public function process_admin_options() {
+         // Get all settings before sanitizing
+         $all_settings = $this->get_post_data();
+         
+         // Sanitize order_id_prefix to only allow alphanumeric characters, hyphens, and underscores
+         if (isset($all_settings['woocommerce_' . $this->id . '_order_id_prefix'])) {
+            $prefix = $all_settings['woocommerce_' . $this->id . '_order_id_prefix'];
+            $sanitized_prefix = preg_replace('/[^a-zA-Z0-9_\-]/', '', $prefix);
+            
+            // If empty after sanitizing, set to default
+            if (empty($sanitized_prefix)) {
+               $sanitized_prefix = 'FWOrder-';
+            }
+            
+            // Update the value in the post data
+            $_POST['woocommerce_' . $this->id . '_order_id_prefix'] = $sanitized_prefix;
+         }
+         
+         // Call parent method to save settings
+         return parent::process_admin_options();
       }
    }
