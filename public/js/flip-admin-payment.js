@@ -29,7 +29,7 @@ var composite = (function(){
       prefixField.on('focus', function() {
          var currentValue = $(this).val();
          if (!$(this).next('.prefix-info').length) {
-            $(this).after('<span class="prefix-info" style="color:blue;display:block;margin-top:5px;">Current prefix: "' + currentValue + '". This will be added to all order IDs sent to Flip as Prefix on Bill Title.</span>');
+            $(this).after('<span class="prefix-info" style="color:blue;display:block;margin-top:5px;">Your orders will appear in Flip\'s system as "' + currentValue + '[order_number]"</span>');
          }
       });
       

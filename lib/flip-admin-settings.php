@@ -60,17 +60,17 @@ return apply_filters('flipforbusiness_settings',
       'order_id_prefix'	=> array(
 			'title'			=> 'Order ID Prefix',
 			'type'			=> 'text',
-			'description'	=> 'Prefix to add to order IDs when sending to Flip API. This helps identify transactions from your store. Only alphanumeric characters, hyphens (-), and underscores (_) are allowed. Default value: FWOrder-',
+			'description'	=> 'This prefix will be added to your WooCommerce order IDs in the Flip payment system. It helps identify transactions from your store in Flip\'s dashboard. Only alphanumeric characters, hyphens (-), and underscores (_) are allowed. Default: FWOrder-',
 			'default'		=> 'FWOrder-',
 			'placeholder'	=> 'FWOrder-',
       ),
-		// 'charge_fee' => array(
-      //    'title'     	=> 'Charge Fee',
-      //    'type'      	=> 'checkbox',
-		// 	'label'     	=> 'Charge Fee for Customer',
-		// 	'description' 	=>	'The fee is charged to the customer',
-      //    'default'      => 'no'
-      // ),
+		'charge_fee' => array(
+         'title'     	=> 'Charge Fee',
+         'type'      	=> 'checkbox',
+			'label'     	=> 'Charge Fee for Customer',
+			'description' 	=>	'The fee is charged to the customer',
+         'default'      => 'no'
+      ),
       'expiry'	=> array(
 			'title'			=> 'Expiry',
 			'type'			=> 'text',

@@ -160,8 +160,7 @@ class FlipForBusiness_Api {
 			'type'                     => "SINGLE",
 			'amount'                   => (float)FlipForBusiness_Utils::getOrderProperty($order, 'total'),
 			'expired_date'             => $params['expiry'],
-			//'redirect_url'             => $params['redirect_thankyou_url'],
-			'redirect_url'             => "https://example.com",
+			'redirect_url'             => $params['redirect_thankyou_url'],
 			'is_address_required'      => !empty($params['customer_details']['address']) ? 1 : 0,
 			'is_phone_number_required' => !empty($params['customer_details']['phone']) ? 1 : 0,
 			'step'                     => 2,
@@ -169,8 +168,7 @@ class FlipForBusiness_Api {
 			'sender_email'             => $params['customer_details']['email'],
 			'sender_phone_number'      => $params['customer_details']['phone'],
 			'sender_address'           => $params['customer_details']['address'],
-			'charge_fee'			   => 1
-			// 'charge_fee'					=> self::$plugin_options['charge_fee'] === 'yes' ? 1 : 0
+			'charge_fee'			   => self::$plugin_options['charge_fee'] === 'yes' ? 1 : 0
 		);
 
 		try {
