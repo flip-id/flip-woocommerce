@@ -173,8 +173,8 @@
 
          // If flip link url exists on the current $Order, reuse it
          // Prevent duplication of API call, which may throw API error
-         if ($order->meta_exists('_flip_link_url')){
-            $successResponse['redirect'] = $order->get_meta('_flip_link_url');
+         if (FlipForBusiness_Utils::has_flip_link_url($order)){
+            $successResponse['redirect'] = FlipForBusiness_Utils::get_flip_link_url($order, true);
          }
 
          return $successResponse;
