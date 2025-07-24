@@ -218,6 +218,7 @@ class FlipForBusiness_Notify_Handler {
    /**
     * Handle Flip Notification Object, after payment status changes on Flip
     * Will update WC payment status accordingly
+    * Idempotent function to prevent duplicate processing
     * @param  [Object] $flip_notification Object representation of Flip JSON
     * notification
     * @return void
@@ -232,6 +233,12 @@ class FlipForBusiness_Notify_Handler {
       $sender_bank_type = FlipForBusiness_Utils::flip_clean_string($flip_notification->sender_bank_type);
       $sender_bank_name = FlipForBusiness_Utils::flip_clean_string($flip_notification->sender_bank);
       
+      // Check if this transaction has already been processed (idempotent check)
+      if (FlipForBusiness_Utils::is_transaction_processed($order, $flip_notification->id)) {
+         // Transaction already processed, skip to prevent duplicate processing
+         return;
+      }
+      
       /* translators: 1: Status notification, 2: Bank type, 3: Band sender */
       $order->add_order_note(sprintf(__('Flip HTTP notification received: Transaction %1$s. Type: %2$s, Bank: %3$s', 'flip-for-business'), $status_notification, $sender_bank_type, $sender_bank_name));
       
@@ -240,9 +247,16 @@ class FlipForBusiness_Notify_Handler {
 
       switch ($flip_notification->status) {
          case 'SUCCESSFUL':
+            // Use the centralized function for idempotent status update
+            if (FlipForBusiness_Utils::update_order_status_if_successful($order, $flip_notification)) {
+               // Status was updated by the centralized function
+               break;
+            } else {
+               // Fallback to original logic if order is not pending
             $order->payment_complete($flip_notification->id);
             /* translators: 1: Status notification, 2: Bank type, 3: Band sender */
             $order->add_order_note(sprintf(__('Flip payment completed: Transaction %1$s. Type: %2$s, Bank: %3$s', 'flip-for-business'), $status_notification, $sender_bank_type, $sender_bank_name));
+            }
             break;
          case 'PENDING':
             /* translators: 1: Status notification, 2: Bank type, 3: Band sender */
