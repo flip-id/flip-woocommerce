@@ -72,23 +72,18 @@
          // Get data for charge to API
          $params = $this->getPaymentRequestData( $order_id );
 
-         if (
-            !empty($order->get_meta('_flip_link_id')) && 
-            !empty($order->get_meta('_flip_expired_date')) && 
-            !FlipForBusiness_Utils::flip_is_expired($order->get_meta('_flip_expired_date')) 
-         ) {
-            $redirectUrl = $order->get_meta('_flip_link_url');
+         if (FlipForBusiness_Utils::is_flip_link_valid($order)) {
+            $redirectUrl = FlipForBusiness_Utils::get_flip_link_url($order);
          } else {
             try {
                $result_accept_payment = FlipForBusiness_Api::createBillTransaction( $order, $params );
 
                if (!empty($result_accept_payment->link_id)) {
-                  $order->update_meta_data('_flip_link_id', $result_accept_payment->link_id);
-                  $order->update_meta_data('_flip_link_url', $result_accept_payment->link_url);
-                  $order->update_meta_data('_flip_expired_date', $result_accept_payment->expired_date);
+                  // Use centralized helper to safely process and preserve the payment URL
+                  $redirectUrl = FlipForBusiness_Utils::process_flip_payment_url($result_accept_payment->link_url);
                   
-                  // Ensure the redirect URL is absolute by prepending 'https://' if necessary
-                  $redirectUrl = (strpos($result_accept_payment->link_url, 'http') === 0) ? $result_accept_payment->link_url : 'https://' . $result_accept_payment->link_url;
+                  // Use centralized helper to set metadata
+                  FlipForBusiness_Utils::set_flip_metadata($order, $result_accept_payment->link_id, $redirectUrl, $result_accept_payment->expired_date);
                }
             } catch (\Exception $e) {
                $this->setLogError($e->getMessage());
