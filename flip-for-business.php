@@ -59,11 +59,15 @@ class FlipForBusiness_Payments {
         // 5. Registers action link plugin
         add_filter( 'plugin_action_links_' . plugin_basename(__FILE__),  array( __CLASS__, 'flip_plugin_action_links' ));
         
-        // 6. Hook remove button pay if not Expired
+        // 6. Hook remove button pay from user order history if payment expired
         add_action( 'woocommerce_my_account_my_orders_actions', array( __CLASS__, 'flip_remove_pay_button_my_account_orders'), 10, 2 );
 
         // 7. Declare HPOS Compatibility
         add_action( 'before_woocommerce_init', array( __CLASS__, 'flip_declare_compatibility'));
+        
+        // 8. Add hook to handle Flip payment redirect
+        add_action( 'template_redirect', array( __CLASS__, 'flip_payment_redirect_handler' ));
+        
     }
 
     /**
@@ -154,21 +158,27 @@ class FlipForBusiness_Payments {
     
     /**
      * 6. Change Url Payment if payment gateway flip
+     * Optimized to avoid API calls on order history display
      * @param mixed $actions
      * @param mixed $order
      * @return mixed
      */
     public static function flip_remove_pay_button_my_account_orders($actions, $order) {
         $flip_payment_method = $order->get_payment_method();
-        $flip_expired = $order->get_meta('_flip_expired_date');
-        $flip_link_url = $order->get_meta('_flip_link_url');
+        $flip_expired = FlipForBusiness_Utils::get_flip_expired_date($order);
+        $flip_link_url = FlipForBusiness_Utils::get_flip_link_url($order, false);
         $status_expired = FlipForBusiness_Utils::flip_is_expired($flip_expired);
         
         if (isset($actions['pay']) && $flip_payment_method === "flip") {
             if ($status_expired && !empty($flip_link_url)) {
-                unset($actions['pay']); // Hapus tombol "Bayar"
-            }else{
-                $actions['pay']['url'] = $flip_link_url;
+                unset($actions['pay']); // Remove "Pay" button if payment is expired
+            } else {
+                // Use simple query parameter approach for dynamic payment URL generation
+                $actions['pay']['url'] = add_query_arg(array(
+                    'flip_payment_check' => '1',
+                    'order_id' => $order->get_id(),
+                    'nonce' => wp_create_nonce('flip_payment_check_' . $order->get_id())
+                ), home_url('/'));
             }
         }
     
@@ -184,6 +194,57 @@ class FlipForBusiness_Payments {
             \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
         }
     }
+
+    /**
+     * 8. Handle Flip payment redirect with API check
+     * Called only when user clicks "Pay" button to avoid multiple API calls
+     */
+    public static function flip_payment_redirect_handler() {
+        // Check if this is a Flip payment check request
+        if (!isset($_GET['flip_payment_check']) || $_GET['flip_payment_check'] !== '1') {
+            return;
+        }
+
+        // Verify nonce for security
+        if (!isset($_GET['nonce']) || !wp_verify_nonce($_GET['nonce'], 'flip_payment_check_' . $_GET['order_id'])) {
+            wp_die(__('Security check failed', 'flip-for-business'));
+        }
+
+        $order_id = intval($_GET['order_id']);
+        $order = wc_get_order($order_id);
+
+        if (!$order) {
+            wp_die(__('Order not found', 'flip-for-business'));
+        }
+
+        // Check if user owns this order
+        if ($order->get_customer_id() !== get_current_user_id()) {
+            wp_die(__('Access denied', 'flip-for-business'));
+        }
+
+        // Get payment URL with API check (only when user clicks Pay)
+        $payment_url = FlipForBusiness_Utils::get_flip_link_url($order, true);
+
+        if (empty($payment_url)) {
+            wp_die(__('Payment URL not available', 'flip-for-business'));
+        }
+
+        // Force clear any redirect caching
+        wp_cache_flush();
+        
+        // Set proper headers to prevent caching
+        header('Cache-Control: no-cache, no-store, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        
+        // Redirect to the original URL
+        // Using PHP's native header() instead of wp_redirect() to avoid any WordPress processing remove $ on flip payment url
+        
+        header("Location: {$payment_url}", true, 302);
+        exit;
+    }
+
+
 
 
     /* -------------------------------------------------------------------------- */
