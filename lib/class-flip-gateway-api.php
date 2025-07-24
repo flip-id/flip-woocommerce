@@ -248,6 +248,13 @@ class FlipForBusiness_Api {
 			throw $e;
 		}
 
+		$data = array(
+			'args' => $bill_id,
+			'response' => $response
+		);
+
+		FlipForBusiness_Logger::log(wp_json_encode($data), 'flip-accept-payment', 'flip', current_time('timestamp'));
+
 		return $response;
 	}
 }
