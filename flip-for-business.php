@@ -6,14 +6,14 @@
  * that starts the plugin.
  *
  * @link              https://flip.id/business
- * @since             1.0.3
+ * @since             1.0.4
  * @package           FlipForBusiness_Payments
  *
  * @wordpress-plugin
  * Plugin Name:       Flip for Business
  * Plugin URI:        https://gitlab.com/flip-dev/flip-for-business
  * Description:       Flip for Business is a robust plugin that integrates Flip's secure and efficient payment processing directly into your WordPress e-commerce site. With this plugin, you can offer your customers a smooth, reliable payment experience without ever leaving your store.
- * Version:           1.0.3
+ * Version:           1.0.4
  * Author:            Flip
  * Author URI:        https://flip.id/business
  * License:           GPL-2.0+

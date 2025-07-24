@@ -41,6 +41,9 @@ A: Flip supports various payment methods including bank transfers, e-wallets, an
 1. no available content
 
 == Changelog ==
+= 1.0.3 2025-07-24 =
+Improve pay button in user order history menu
+
 = 1.0.2 2025-05-13 =
 Fix payment notification webhook
 

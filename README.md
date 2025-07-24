@@ -117,6 +117,9 @@ This plugin is released under the GPL v2 or later license. See LICENSE for detai
 
 ## Changelog
 
+#### 1.0.3 2025-07-24
+Improve pay button in user order history menu
+
 #### 1.0 2024-11-18
 Ready to service version 1.0
 
