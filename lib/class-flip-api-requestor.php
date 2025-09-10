@@ -8,6 +8,27 @@ if (!defined('ABSPATH')) {
  */
 
 class FlipForBusiness_Api_Requestor {
+   
+   /**
+    * Get plugin version for User-Agent header
+    * @return string
+    */
+   private static function get_plugin_version() {
+      // Method 3: Define a constant in the main plugin file and use it
+      if (defined('FLIP_FOR_BUSINESS_VERSION')) {
+         return FLIP_FOR_BUSINESS_VERSION;
+      }
+      
+      return 'Unknown';
+   }
+
+   /**
+    * Get custom User-Agent string
+    * @return string
+    */
+   private static function get_user_agent() {
+      return 'Flip_Woo_Version_' . self::get_plugin_version();
+   }
    /**
     * Send GET request
     * @param string  $url
@@ -18,7 +39,8 @@ class FlipForBusiness_Api_Requestor {
       $response = wp_remote_get($url, array(
          'headers' => array(
             'Content-Type' => 'application/x-www-form-urlencoded',
-            'Authorization' => 'Basic ' . base64_encode($secret_key)
+            'Authorization' => 'Basic ' . base64_encode($secret_key),
+            'User-Agent' => self::get_user_agent()
          )
       ));
 
@@ -36,7 +58,8 @@ class FlipForBusiness_Api_Requestor {
          'body'    => $data,
          'headers' => array(
             'Content-Type' => 'application/x-www-form-urlencoded',
-            'Authorization' => 'Basic ' . base64_encode($secret_key)
+            'Authorization' => 'Basic ' . base64_encode($secret_key),
+            'User-Agent' => self::get_user_agent()
          )
       ));
 
@@ -57,7 +80,8 @@ class FlipForBusiness_Api_Requestor {
             'Content-Type' => 'application/x-www-form-urlencoded',
             'idempotency-key' => '-flip-wc-' .$order_id,
             'X-TIMESTAMP'=> gmdate('c', current_time('timestamp')),
-            'Authorization' => 'Basic ' . base64_encode($secret_key)
+            'Authorization' => 'Basic ' . base64_encode($secret_key),
+            'User-Agent' => self::get_user_agent()
          )
       ));
 
