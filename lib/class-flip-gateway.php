@@ -80,7 +80,7 @@
 
                if (!empty($result_accept_payment->link_id)) {
                   // Use centralized helper to safely process and preserve the payment URL
-                  $redirectUrl = FlipForBusiness_Utils::process_flip_payment_url($result_accept_payment->link_url);
+                  $redirectUrl = FlipForBusiness_Utils::clean_flip_api_url($result_accept_payment->link_url);
                   
                   // Use centralized helper to set metadata
                   FlipForBusiness_Utils::set_flip_metadata($order, $result_accept_payment->link_id, $redirectUrl, $result_accept_payment->expired_date);

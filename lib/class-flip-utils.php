@@ -301,7 +301,7 @@ class FlipForBusiness_Utils {
             if (!empty($payment_data->payment_url)) {
                
                // Process and preserve the payment URL properly
-               $processed_payment_url = self::process_flip_payment_url($payment_data->payment_url);
+               $processed_payment_url = self::clean_flip_api_url($payment_data->payment_url);
                
                // Debug: Log URL processing
                if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -527,25 +527,26 @@ class FlipForBusiness_Utils {
       return in_array($transaction_id, $processed_transactions);
    }
 
+
    /**
-    * Process Flip payment URLs for safe storage
-    * Trims whitespace and ensures URL has proper protocol
-    * @param string $url The URL to process
-    * @return string The processed URL
+    * Clean escaped characters from Flip API URL and ensure HTTPS protocol
+    * Removes backslashes and adds protocol if missing
+    * @param string $url The URL from Flip API response
+    * @return string The cleaned URL with proper protocol
     */
-   public static function process_flip_payment_url($url) {
+   public static function clean_flip_api_url($url) {
       if (empty($url)) {
          return $url;
       }
-      
-      // Ensure URL is properly encoded to preserve special characters
-      $url = trim($url);
-      
-      // If URL doesn't start with http/https, add https://
-      if (strpos($url, 'http') !== 0) {
+
+      // Remove any whitespace and escaped backslashes
+      $url = trim(stripslashes($url));
+
+      // Add https protocol if not present
+      if (!preg_match('/^https?:\/\//', $url)) {
          $url = 'https://' . $url;
       }
-      
+
       return $url;
    }
 

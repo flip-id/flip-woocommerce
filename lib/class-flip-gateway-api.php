@@ -201,6 +201,10 @@ class FlipForBusiness_Api {
 		// 	]
 		// ];
 		
+		if (isset($response->link_url)) {
+			$response->link_url = FlipForBusiness_Utils::clean_flip_api_url($response->link_url);
+		}
+
 		$data = array(
 			'args' => $args,
 			'response' => $response
