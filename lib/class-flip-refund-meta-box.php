@@ -65,7 +65,7 @@ class FlipForBusiness_Refund_Meta_Box {
             <div id="save_status"></div>
          <?php
       }else{
-         echo '<p>' . esc_attr_e('Flip refund not available for the selected payment method.', 'flip-for-business') . '</p>';
+         echo '<p>' . esc_html__('Flip refund not available for the selected payment method.', 'flip-for-business') . '</p>';
       }
    }
 
